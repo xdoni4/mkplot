@@ -1,6 +1,9 @@
 import numpy as np
 import json
+import matplotlib
 import matplotlib.pyplot as plt
+# from PIL import Image
+# matplotlib.use('Qt5Agg')
 
 class RawSubplotData():
     def __init__(self, pltype, x, y, xerr, yerr, axes_labels, axes_pupils, color, description):
@@ -66,18 +69,22 @@ class Plotter:
             axes.append(fig.add_subplot(1, len(plots), i+1))
             for subplot in plot[0]:
                 Plotter.plot_subplot(axes[i], subplot)
-            axes[i].set_title(plot[1])
+            axes[i].set_title(plot[1]) 
+        img = open("images/fig.png", 'w')
+        plt.show()
+        fig.savefig("images/fig.png") 
 
     @classmethod
     def plot_subplot(self, ax, s):
         ax.scatter(0, 0, color='white') 
         ax.minorticks_on()
-        ax.grid(True, which='both')
+        ax.grid(True, which='major', linewidth=1)
+        ax.grid(True, which='minor', linewidth=0.5)
         if (s.type == 'lsq'):
             A = np.vstack([s.x, np.ones(len(s.y))]).T
             k, b = np.linalg.lstsq(A, s.y, rcond=None)[0]
-            ax.plot(s.x, k*s.x+b, color=s.color, label=s.description)
-            ax.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, color=s.color, ecolor='black', capsize=5)
+            ax.plot(s.x, k*s.x+b, color=s.color, label=s.description, linewidth=1.5)
+            ax.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, linewidth=1, color=s.color, ecolor='black', capsize=5)
             ax.set_xlabel(s.axes_labels[0] + ', ' + s.axes_pupils[0], fontsize=15)
             ax.set_ylabel(s.axes_labels[1] + ', ' + s.axes_pupils[1], fontsize=15)
             ax.legend()
@@ -86,4 +93,3 @@ class Plotter:
 data = JsonParser.read("conf.json")
 plots = JsonParser.parse_object(data)
 Plotter.plot(plots)
-plt.show()
