@@ -1,6 +1,9 @@
 import numpy as np
 import json
+import matplotlib
 import matplotlib.pyplot as plt
+# from PIL import Image
+# matplotlib.use('Qt5Agg')
 
 class RawSubplotData():
     def __init__(self, pltype, x, y, xerr, yerr, axes_labels, axes_pupils, color, description):
@@ -37,10 +40,11 @@ class JsonParser:
     def parse_object(self, data):
         plots = []
         for i, plot in enumerate(data["data"], start=0):
-            plots.append([])
+            array = []
             subplots = plot["subplots"]
             for subplot in subplots:
-                plots[i].append(JsonParser.parse_subplot(subplot)) 
+                array.append(JsonParser.parse_subplot(subplot)) 
+            plots.append((array, plot["title"]))
         return plots
 
     @classmethod
@@ -59,21 +63,32 @@ class JsonParser:
 class Plotter:
     @classmethod
     def plot(self, plots):
-        for plot in plots:
-            for subplot in plot:
-                Plotter.plot_subplot(subplot)
+        fig = plt.figure()
+        axes = [] 
+        for i, plot in enumerate(plots):
+            axes.append(fig.add_subplot(1, len(plots), i+1))
+            for subplot in plot[0]:
+                Plotter.plot_subplot(axes[i], subplot)
+            axes[i].set_title(plot[1]) 
+        img = open("images/fig.png", 'w')
+        plt.show()
+        fig.savefig("images/fig.png") 
 
     @classmethod
-    def plot_subplot(self, s):
+    def plot_subplot(self, ax, s):
+        ax.scatter(0, 0, color='white') 
+        ax.minorticks_on()
+        ax.grid(True, which='major', linewidth=1)
+        ax.grid(True, which='minor', linewidth=0.5)
         if (s.type == 'lsq'):
             A = np.vstack([s.x, np.ones(len(s.y))]).T
             k, b = np.linalg.lstsq(A, s.y, rcond=None)[0]
-            plt.plot(s.x, k*s.x+b, color=s.color, label=s.description)
-            plt.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, color=s.color, ecolor='black', capsize=5)
-            plt.xlabel(s.axes_labels[0] + ', ' + s.axes_pupils[0], fontsize=15)
-            plt.ylabel(s.axes_labels[1] + ', ' + s.axes_pupils[1], fontsize=15)
-            plt.legend()
-            plt.show()
+            ax.plot(s.x, k*s.x+b, color=s.color, label=s.description, linewidth=1.5)
+            ax.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, linewidth=1, color=s.color, ecolor='black', capsize=5)
+            ax.set_xlabel(s.axes_labels[0] + ', ' + s.axes_pupils[0], fontsize=15)
+            ax.set_ylabel(s.axes_labels[1] + ', ' + s.axes_pupils[1], fontsize=15)
+            ax.legend()
+            
 
 data = JsonParser.read("conf.json")
 plots = JsonParser.parse_object(data)
