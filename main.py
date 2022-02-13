@@ -80,14 +80,22 @@ class Plotter:
         ax.minorticks_on()
         ax.grid(True, which='major', linewidth=1)
         ax.grid(True, which='minor', linewidth=0.5)
+        ax.set_xlabel(s.axes_labels[0] + ', ' + s.axes_pupils[0], fontsize=15)
+        ax.set_ylabel(s.axes_labels[1] + ', ' + s.axes_pupils[1], fontsize=15) 
+        r = np.linspace(0, 1.2*s.x[len(s.x)-1])
         if (s.type == 'lsq'):
             A = np.vstack([s.x, np.ones(len(s.y))]).T
-            k, b = np.linalg.lstsq(A, s.y, rcond=None)[0]
-            ax.plot(s.x, k*s.x+b, color=s.color, label=s.description, linewidth=1.5)
-            ax.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, linewidth=1, color=s.color, ecolor='black', capsize=5)
-            ax.set_xlabel(s.axes_labels[0] + ', ' + s.axes_pupils[0], fontsize=15)
-            ax.set_ylabel(s.axes_labels[1] + ', ' + s.axes_pupils[1], fontsize=15)
-            ax.legend()
+            k, b = np.linalg.lstsq(A, s.y, rcond=None)[0] 
+            ax.plot(r, k*r+b, color=s.color, label=s.description, linewidth=1)
+        
+        elif (s.type.rstrip('_0123456789') == 'poly'):
+            coefs = np.polyfit(s.x, s.y, int(s.type.split('_')[1]))
+            ys = np.zeros(len(r))
+            for i, c in enumerate(coefs):
+                ys += c * r ** (len(coefs)-i-1) 
+            ax.plot(r, ys, color=s.color, label=s.description, linewidth=1)
+        ax.errorbar(s.x, s.y, s.yerr, s.xerr, fmt='o', markersize=3, linewidth=1, color=s.color, ecolor='black', capsize=0)
+        ax.legend()
             
 
 data = JsonParser.read("conf.json")
