@@ -24,6 +24,8 @@ class Gradient:
 
     def compute(self, constants, points):
         assert self.n_variables == points.shape[1]
+        constants = constants.astype('float32')
+        points = points.astype('float32')
         grads = np.array([]).reshape(0, points.shape[1])
         for i in range(points.shape[0]):
             grads = np.concatenate([grads, grad(self.f)(np.concatenate([points[i],
